@@ -20,7 +20,6 @@
 # import torch.nn.functional as F
 # from PIL import Image
 # import matplotlib.pyplot as plt
-#
 # from torchvision import transforms
 
 """---------------------Dataset--------------------"""
@@ -45,8 +44,7 @@
 #     """返回数据地址列表长度"""
 #     def __len__(self):
 #         return len(self.path_list)
-#
-#
+
 # # Ants dataset
 # ants_dataset = MyData(root_dir=r'D:\PyTorch_Python\Dataset_packing\hymenoptera_data\train',
 #                       label_dir=r'ants')
