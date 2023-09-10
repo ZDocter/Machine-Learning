@@ -1,29 +1,18 @@
-"""
-1、Dataset的使用
-2、tensorboard的使用
-3、transforms的使用
-4、DataLoader的使用
-5、MaxPool层的使用
-6、Conv2d的使用
-7、ReLU层的使用
-8、torchvision的使用
-"""
-# import os
-# import time
-# import numpy
-# import torch
-# import torchvision
-# from torch import nn
-# from torch.nn import MaxPool2d, ReLU, Sequential, Flatten, L1Loss, MSELoss, CrossEntropyLoss
-# from torch.utils.data import DataLoader, Dataset
-# from torch.utils.tensorboard import SummaryWriter
-# import torch.nn.functional as F
-# from PIL import Image
-# import matplotlib.pyplot as plt
-#
-# from torchvision import transforms
+import os
+import time
+import numpy
+import torch
+import torchvision
+from torch import nn
+from torch.nn import MaxPool2d, ReLU, Sequential, Flatten, L1Loss, MSELoss, CrossEntropyLoss
+from torch.utils.data import DataLoader, Dataset
+from torch.utils.tensorboard import SummaryWriter
+import torch.nn.functional as F
+from PIL import Image
+import matplotlib.pyplot as plt
+from torchvision import transforms, datasets
 
-"""---------------------Dataset--------------------"""
+"""---------------------Dataset 使用--------------------"""
 # # 所有子类必须重写__getitem__()和__len__()方法
 # class MyData(Dataset):
 #
@@ -61,7 +50,7 @@
 # image_ant0.show()
 # image_bee0.show()
 
-"""---------------------tensorboard--------------------"""
+"""---------------------tensorboard 使用--------------------"""
 # 使用tensorboard --logdir=log_dir激活视图
 # 显示图像
 # img = Image.open(r'D:\PyTorch_Python\Dataset_packing\hymenoptera_data\train\ants\0013035.jpg')
@@ -73,9 +62,10 @@
 # # 绘制函数图
 # for i in range(100):
 #     writer.add_scalar('y = 2x', i * 2, i)  # Name, y axis, x axis
+#     writer.flush()  # 刷新显示
 # writer.close()
 
-"""---------------------transforms--------------------"""
+"""---------------------transforms 数据转化--------------------"""
 # img = Image.open(r'D:\PyTorch_Python\Dataset_packing\hymenoptera_data\train\ants\0013035.jpg')
 # print(type(img))
 # writer = SummaryWriter('logs_transforms')
@@ -109,7 +99,8 @@
 #
 # writer.close()
 
-"""---------------------torchvision中的数据集--------------------"""
+"""---------------------torchvision 中的数据集--------------------"""
+"""可以利用预训练模型实现迁移学习"""
 # writer = SummaryWriter('logs_torchvision')
 # # Train set
 # train_set = torchvision.datasets.CIFAR10(r"D:\PyTorch_Python\BCI_DataSets",
@@ -127,7 +118,7 @@
 #     writer.add_image('CIFAR-10', img, i)
 # writer.close()
 
-"""---------------------DataLoader--------------------"""
+"""---------------------DataLoader 数据加载--------------------"""
 # writer = SummaryWriter("logs_DataLoader")
 # test_data = torchvision.datasets.CIFAR10(r"D:\PyTorch_Python\BCI_DataSets",
 #                                          transform=torchvision.transforms.ToTensor(),
@@ -284,7 +275,7 @@
 # model = ReLU_Model().forward(Input)
 # print(model, '\nn', Input)
 
-"""---------------------简单CNN网络搭建--------------------"""
+"""---------------------简单 CNN 网络搭建--------------------"""
 # import torchvision
 # import torch.nn as nn
 # import torch
@@ -345,7 +336,7 @@
 # write.add_graph(model=mymodel, input_to_model=torch.ones(64, 3, 32, 32))
 # write.close()
 
-"""---------------------损失函数 Loss function及优化器--------------------"""
+"""---------------------损失函数 Loss function 及优化器--------------------"""
 # # 标准差
 # Inputs = torch.tensor([1, 2, 3], dtype=torch.float32).reshape([-1, 1, 1, 3])
 # Targets = torch.tensor([1, 2, 5], dtype=torch.float32).reshape([-1, 1, 1, 3])
@@ -389,7 +380,7 @@
 # My_model = Model().cuda()
 #
 # # 优化器，随机梯度下降
-# optin = torch.optim.SGD(My_model.parameters(), lr=0.01)
+# optin = torch.optim.SGD(My_model.parameters(), lr=0.01, weight_decay=0)
 #
 # # 训练
 # t1 = time.time()
@@ -409,7 +400,7 @@
 # t2 = time.time()
 # print((t2 - t1) * 1000 / 360)
 
-"""---------------------现有模型修改--------------------"""
+"""--------------------- 现有模型修改 --------------------"""
 # train_data = torchvision.datasets.CIFAR10(r'D:\PyTorch_Python\BCI_DataSets', train=True,
 #                                           transform=transforms.ToTensor(), download=True)
 # test_data = torchvision.datasets.CIFAR10(r'D:\PyTorch_Python\BCI_DataSets', train=False,
@@ -428,7 +419,16 @@
 # vgg16_False.classifier[6] = nn.Linear(4096, 10)  # 修改现有层
 # print(vgg16_False)
 
-"""---------------------模型保存、加载--------------------"""
+"""----------------------- 迁移学习 ----------------------"""
+# # 加载预训练模型
+# vgg16_True = torchvision.models.vgg16(pretrained=True)
+# # 模型参数冻结
+# for param in vgg16_True.parameters():
+#     param.requires_grad = False  # 后续训练不对冻结的权重做优化
+# # 模型修改（只修改最后一个全连接层）
+# vgg16_True.classifier[6] = nn.Linear(in_features=4096, out_features=10, bias=True)
+
+"""--------------------- 模型保存、加载 --------------------"""
 # vgg16_False = torchvision.models.vgg16(pretrained=False)
 # # 保存方式1：保存模型及参数
 # torch.save(vgg16_False, 'vgg16_method1.pth')
@@ -465,7 +465,7 @@
 # model = mymodel()
 # torch.save(model, 'mymodel.pth')  # 保存
 
-"""---------------------采用GPU训练--------------------"""
+"""--------------------- 采用GPU训练 --------------------"""
 # # 方式1：调用模型、数据、损失函数的.cuda()
 # import torch
 # import torchvision
@@ -498,6 +498,8 @@
 #
 # # 测试网络正确性
 # if __name__ == '__main__':
+# device = "cuda" if torch.cuda.is_available() else "cpu"
+#
 #     train_model = Model()
 #     Input = torch.ones([64, 3, 32, 32])
 #     Output = train_model(Input)
@@ -574,114 +576,106 @@
 # device = torch.device('cuda')  # 定义训练设备
 # My_Model = My_Model.to(device)  # 网络放入设备
 
-"""---------------------深度ResNet--------------------"""
-import torch
-import torch.nn as nn
-import torchvision.datasets as dsets
-import torchvision.transforms as transforms
-from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
-
-writer = SummaryWriter('ResNet')
-
-transform = transforms.Compose([transforms.Resize(40)
-                                   , transforms.RandomHorizontalFlip()  # 随机水平翻转图片
-                                   , transforms.RandomCrop(32)
-                                   , transforms.ToTensor()
-                                ])
-
-train_datasets = dsets.CIFAR10(root=r'D:\PyTorch_Python\Datas', train=True
-                               , transform=transform, download=True)
-tset_datasets = dsets.CIFAR10(root=r'D:\PyTorch_Python\Datas', train=False
-                              , transform=transform, download=True)
-
-train_loader = DataLoader(train_datasets, batch_size=128, shuffle=False)
-test_loader = DataLoader(tset_datasets, batch_size=128, shuffle=False)
-
-
-# 一个卷积核为3*3的卷积层
-def conv3x3(in_channels, out_channels, stride=1):
-    return nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False)
-
-
-# 残差块
-class ResidualBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, stride=1, downsample=None):
-        super().__init__()
-        self.conv1 = conv3x3(in_channels, out_channels, stride)
-        self.bn1 = nn.BatchNorm2d(out_channels)
-        self.relu = nn.ReLU(inplace=True)
-        self.conv2 = conv3x3(out_channels, out_channels)
-        self.bn2 = nn.BatchNorm2d(out_channels)
-        self.downsample = downsample
-
-    def forward(self, x):
-        residual = x
-        out = self.conv1(x)
-        out = self.bn1(out)
-        out = self.relu(out)
-        out = self.conv2(out)
-        out = self.bn2(out)
-        # 判断残差块是否需要发挥作用
-        if self.downsample:
-            residual = self.downsample(x)
-        out += residual  # 比较有无残差快内卷积部分效果哪个好
-        out = self.relu(out)
-        return out
-
-
-# 构建残差网络
-class ResNet(nn.Module):
-    def __init__(self, block, layers, num_classes=10):
-        super().__init__()
-        self.in_channels = 16
-        self.conv = conv3x3(3, 16)
-        self.bn = nn.BatchNorm2d(16)
-        self.relu = nn.ReLU(inplace=True)
-        self.layer1 = self.make_layer(block, 16, layers[0])
-        self.layer2 = self.make_layer(block, 32, layers[0], 2)
-        self.layer3 = self.make_layer(block, 64, layers[1], 2)
-        self.avg_pool = nn.AvgPool2d(8)
-        self.fc = nn.Linear(64, num_classes)
-
-    # 确定每个曾
-    def make_layer(self, block, out_channels, blocks, stride=1):
-        downsample = None
-        # 输入输出通道数不一致表示经过了卷积块
-
-        if (stride != 1) or (self.in_channels != out_channels):
-            downsample = nn.Sequential(conv3x3(self.in_channels, out_channels, stride=stride)
-                                       , nn.BatchNorm2d(out_channels))
-        layers = []
-        # 输入输出通道一致表示经过残差快
-        layers.append(block(self.in_channels, out_channels, stride, downsample))
-        self.in_channels = out_channels  # 上一块输出通道 = 下一块输入通道
-        for i in range(1, blocks):
-            layers.append(block(out_channels, out_channels))
-        return nn.Sequential(*layers)
-
-    def forward(self, x):
-        out = self.conv(x)
-        out = self.bn(out)
-        out = self.relu(out)
-        out = self.layer1(out)
-        out = self.layer2(out)
-        out = self.layer3(out)
-        out = self.avg_pool(out)
-        out = out.view(out.size(0), -1)  # 转化为一列
-        out = self.fc(out)
-        return out
-
-
-resnet = ResNet(ResidualBlock, [3, 3, 3])
-print(resnet)
-writer.add_graph(model=resnet, input_to_model=torch.ones(64, 3, 32, 32))
-writer.close()
-"""---------------------循环神经网络、长短时记忆--------------------"""
-# """RNN MNIST手写字母识别"""
+"""--------------------- 深度ResNet --------------------"""
+# writer = SummaryWriter('ResNet')
+#
+# transform = transforms.Compose([transforms.Resize(40)
+#                                    , transforms.RandomHorizontalFlip()  # 随机水平翻转图片
+#                                    , transforms.RandomCrop(32)
+#                                    , transforms.ToTensor()
+#                                 ])
+#
+# train_datasets = datasets.CIFAR10(root=r'D:\PyTorch_Python\Datas', train=True
+#                                   , transform=transform, download=True)
+# tset_datasets = datasets.CIFAR10(root=r'D:\PyTorch_Python\Datas', train=False
+#                                  , transform=transform, download=True)
+#
+# train_loader = DataLoader(train_datasets, batch_size=128, shuffle=False)
+# test_loader = DataLoader(tset_datasets, batch_size=128, shuffle=False)
+#
+#
+# # 一个卷积核为3*3的卷积层
+# def conv3x3(in_channels, out_channels, stride=1):
+#     return nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False)
+#
+#
+# # 残差块
+# class ResidualBlock(nn.Module):
+#     def __init__(self, in_channels, out_channels, stride=1, downsample=None):
+#         super().__init__()
+#         self.conv1 = conv3x3(in_channels, out_channels, stride)
+#         self.bn1 = nn.BatchNorm2d(out_channels)
+#         self.relu = nn.ReLU(inplace=True)
+#         self.conv2 = conv3x3(out_channels, out_channels)
+#         self.bn2 = nn.BatchNorm2d(out_channels)
+#         self.downsample = downsample
+#
+#     def forward(self, x):
+#         residual = x
+#         out = self.conv1(x)
+#         out = self.bn1(out)
+#         out = self.relu(out)
+#         out = self.conv2(out)
+#         out = self.bn2(out)
+#         # 判断残差块是否需要发挥作用
+#         if self.downsample:
+#             residual = self.downsample(x)
+#         out += residual  # 比较有无残差快内卷积部分效果哪个好
+#         out = self.relu(out)
+#         return out
+#
+#
+# # 构建残差网络
+# class ResNet(nn.Module):
+#     def __init__(self, block, layers, num_classes=10):
+#         super().__init__()
+#         self.in_channels = 16
+#         self.conv = conv3x3(3, 16)
+#         self.bn = nn.BatchNorm2d(16)
+#         self.relu = nn.ReLU(inplace=True)
+#         self.layer1 = self.make_layer(block, 16, layers[0], 1)
+#         self.layer2 = self.make_layer(block, 32, layers[0], 2)
+#         self.layer3 = self.make_layer(block, 64, layers[1], 2)
+#         self.avg_pool = nn.AvgPool2d(8)
+#         self.fc = nn.Linear(64, num_classes)
+#
+#     # 确定每个层
+#     def make_layer(self, block, out_channels, blocks, stride=1):
+#         downsample = None
+#         # 输入输出通道数不一致表示经过了卷积块
+#
+#         if (stride != 1) or (self.in_channels != out_channels):
+#             downsample = nn.Sequential(conv3x3(self.in_channels, out_channels, stride=stride)
+#                                        , nn.BatchNorm2d(out_channels))
+#         layers = []
+#         # 输入输出通道一致表示经过残差快
+#         layers.append(block(self.in_channels, out_channels, stride, downsample))
+#         self.in_channels = out_channels  # 上一块输出通道 = 下一块输入通道
+#         for i in range(1, blocks):
+#             layers.append(block(out_channels, out_channels))
+#         return nn.Sequential(*layers)
+#
+#     def forward(self, x):
+#         out = self.conv(x)
+#         out = self.bn(out)
+#         out = self.relu(out)
+#         out = self.layer1(out)
+#         out = self.layer2(out)
+#         out = self.layer3(out)
+#         out = self.avg_pool(out)
+#         out = out.view(out.size(0), -1)  # 转化为一列
+#         out = self.fc(out)
+#         return out
+#
+#
+# resnet = ResNet(ResidualBlock, [3, 3, 3])
+# print(resnet)
+# writer.add_graph(model=resnet, input_to_model=torch.ones(64, 3, 32, 32))
+# writer.flush()
+# writer.close()
+"""--------------------- 长短时记忆 LSTM --------------------"""
+# """LSTM MNIST手写字母识别"""
 # # Import packages
-# import torch
-# import torch.nn as nn
 # from torch.utils.data import DataLoader
 # import torchvision.datasets as dst
 # import torchvision.transforms as transforms
@@ -756,3 +750,8 @@ writer.close()
 #         if iteration % 100 == 0:
 #             total_loss += loss.item()
 #             print("Epoch {}, Iteration {},  Current loss values {}".format(epoch, iteration, total_loss))
+
+"""--------------------- 循环门控单元 GRU --------------------"""
+
+
+"""--------------------- 图卷积网络 GCN --------------------"""
