@@ -752,6 +752,44 @@ from torchvision import transforms, datasets
 #             print("Epoch {}, Iteration {},  Current loss values {}".format(epoch, iteration, total_loss))
 
 """--------------------- 循环门控单元 GRU --------------------"""
-
-
+"""--------------------- 自编码器 AE 卷积自编码器--------------------"""
+# class EDcoder(nn.Module):
+#     def __init__(self):
+#         super(EDcoder).__init__()
+#         self.encoder = nn.Sequential(
+#             nn.Linear(4096, 1000),
+#             nn.Linear(1000, 3)
+#         )  # 编码器
+#
+#         self.decoder = nn.Sequential(
+#             nn.Linear(4096, 1000),
+#             nn.Linear(1000, 3)
+#         )  # 解码器
+#
+#     def forward(self, x):
+#         encode = self.encoder(x)
+#         decode = self.decoder(encode)
+#         return encode, decode
+#
+#
+# class Conv_EDcoder(nn.Module):
+#     def __init__(self):
+#         super(Conv_EDcoder).__init__()
+#         self.encoder = nn.Sequential(
+#             nn.ConvTranspose2d(in_channels=3, out_channels=64, kernel_size=3),
+#             nn.ConvTranspose2d(in_channels=64, out_channels=64, kernel_size=3)
+#         )  # 编码器(（转置卷积）
+#
+#         self.decoder = nn.Sequential(
+#             nn.ConvTranspose2d(in_channels=64, out_channels=64, kernel_size=3),
+#             nn.ConvTranspose2d(in_channels=64, out_channels=3, kernel_size=3)
+#         )  # 解码器
+#
+#     def forward(self, x):
+#         encode = self.encoder(x)
+#         decode = self.decoder(encode)
+#         return encode, decode
 """--------------------- 图卷积网络 GCN --------------------"""
+import torch as t
+import numpy as np
+from torch_geometric.nn import GCNConv
