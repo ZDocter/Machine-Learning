@@ -576,7 +576,7 @@ from torchvision import transforms, datasets
 # device = torch.device('cuda')  # 定义训练设备
 # My_Model = My_Model.to(device)  # 网络放入设备
 
-"""--------------------- 深度ResNet --------------------"""
+"""--------------------- 残差网络 ResNet --------------------"""
 # writer = SummaryWriter('ResNet')
 #
 # transform = transforms.Compose([transforms.Resize(40)
@@ -594,82 +594,104 @@ from torchvision import transforms, datasets
 # test_loader = DataLoader(tset_datasets, batch_size=128, shuffle=False)
 #
 #
-# # 一个卷积核为3*3的卷积层
-# def conv3x3(in_channels, out_channels, stride=1):
-#     return nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False)
+# # 残差块ResNet18, 34
+# class BasicBlock(nn.Module):
+#     expansion = 1
 #
-#
-# # 残差块
-# class ResidualBlock(nn.Module):
-#     def __init__(self, in_channels, out_channels, stride=1, downsample=None):
-#         super().__init__()
-#         self.conv1 = conv3x3(in_channels, out_channels, stride)
+#     def __init__(self, in_channels, out_channels, stride=1):
+#         super(BasicBlock, self).__init__()
+#         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False)
 #         self.bn1 = nn.BatchNorm2d(out_channels)
-#         self.relu = nn.ReLU(inplace=True)
-#         self.conv2 = conv3x3(out_channels, out_channels)
+#         self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False)
 #         self.bn2 = nn.BatchNorm2d(out_channels)
-#         self.downsample = downsample
+#         self.relu = nn.ReLU(inplace=True)
+#
+#         self.shortcut = nn.Sequential()
+#         if stride != 1 or in_channels != self.expansion * out_channels:
+#             self.shortcut = nn.Sequential(
+#                 nn.Conv2d(in_channels, self.expansion * out_channels, kernel_size=1, stride=stride, bias=False),
+#                 nn.BatchNorm2d(self.expansion * out_channels)
+#             )
 #
 #     def forward(self, x):
-#         residual = x
-#         out = self.conv1(x)
-#         out = self.bn1(out)
+#         out = self.relu(self.bn1(self.conv1(x)))
+#         out = self.bn2(self.conv2(out))
+#         out += self.shortcut(x)
 #         out = self.relu(out)
-#         out = self.conv2(out)
-#         out = self.bn2(out)
-#         # 判断残差块是否需要发挥作用
-#         if self.downsample:
-#             residual = self.downsample(x)
-#         out += residual  # 比较有无残差快内卷积部分效果哪个好
+#         return out
+#
+#
+# # 残差块ResNet50, 101, 152
+# class Bottleneck(nn.Module):
+#     expansion = 4
+#
+#     def __init__(self, in_channels, out_channels, stride=1):
+#         super(Bottleneck, self).__init__()
+#         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=False)
+#         self.bn1 = nn.BatchNorm2d(out_channels)
+#         self.relu = nn.ReLU(inplace=True)
+#         self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False)
+#         self.bn2 = nn.BatchNorm2d(out_channels)
+#         self.conv3 = nn.Conv2d(out_channels, self.expansion * out_channels, kernel_size=1, bias=False)
+#         self.bn3 = nn.BatchNorm2d(self.expansion * out_channels)
+#
+#         self.shortcut = nn.Sequential()
+#         if stride != 1 or in_channels != self.expansion * out_channels:
+#             self.shortcut = nn.Sequential(
+#                 nn.Conv2d(in_channels, self.expansion * out_channels, kernel_size=1, stride=stride, bias=False),
+#                 nn.BatchNorm2d(self.expansion * out_channels)
+#             )
+#
+#     def forward(self, x):
+#         out = self.relu(self.bn1(self.conv1(x)))
+#         out = self.relu(self.bn2(self.conv2(out)))
+#         out = self.bn3(self.conv3(out))
+#         out += self.shortcut(x)
 #         out = self.relu(out)
 #         return out
 #
 #
 # # 构建残差网络
 # class ResNet(nn.Module):
-#     def __init__(self, block, layers, num_classes=10):
-#         super().__init__()
-#         self.in_channels = 16
-#         self.conv = conv3x3(3, 16)
-#         self.bn = nn.BatchNorm2d(16)
-#         self.relu = nn.ReLU(inplace=True)
-#         self.layer1 = self.make_layer(block, 16, layers[0], 1)
-#         self.layer2 = self.make_layer(block, 32, layers[0], 2)
-#         self.layer3 = self.make_layer(block, 64, layers[1], 2)
-#         self.avg_pool = nn.AvgPool2d(8)
-#         self.fc = nn.Linear(64, num_classes)
+#     def __init__(self, block, num_blocks, num_classes=7):
+#         super(ResNet, self).__init__()
+#         self.in_channels = 64
 #
-#     # 确定每个层
-#     def make_layer(self, block, out_channels, blocks, stride=1):
-#         downsample = None
-#         # 输入输出通道数不一致表示经过了卷积块
+#         self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
+#         self.bn1 = nn.BatchNorm2d(64)
+#         self.layer1 = self._make_layer(block, 64, num_blocks[0], stride=1)
+#         self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2)
+#         self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
+#         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
+#         self.linear = nn.Linear(512, num_classes)
 #
-#         if (stride != 1) or (self.in_channels != out_channels):
-#             downsample = nn.Sequential(conv3x3(self.in_channels, out_channels, stride=stride)
-#                                        , nn.BatchNorm2d(out_channels))
+#         self.avg_pool = nn.AvgPool2d(kernel_size=4)
+#         self.dropout = nn.Dropout(p=0.5, inplace=True)
+#
+#     def _make_layer(self, block, channels, num_blocks, stride):
+#         strides = [stride] + [1] * (num_blocks - 1)
 #         layers = []
-#         # 输入输出通道一致表示经过残差快
-#         layers.append(block(self.in_channels, out_channels, stride, downsample))
-#         self.in_channels = out_channels  # 上一块输出通道 = 下一块输入通道
-#         for i in range(1, blocks):
-#             layers.append(block(out_channels, out_channels))
+#         for stride in strides:
+#             layers.append(block(self.in_channels, channels, stride))
+#             self.in_channels = channels * block.expansion
 #         return nn.Sequential(*layers)
 #
 #     def forward(self, x):
-#         out = self.conv(x)
-#         out = self.bn(out)
-#         out = self.relu(out)
+#         out = F.relu(self.bn1(self.conv1(x)))
 #         out = self.layer1(out)
 #         out = self.layer2(out)
 #         out = self.layer3(out)
+#         out = self.layer4(out)
 #         out = self.avg_pool(out)
-#         out = out.view(out.size(0), -1)  # 转化为一列
-#         out = self.fc(out)
+#         out = out.view(out.size(0), -1)
+#         out = self.dropout(out)
+#         out = self.linear(out)
 #         return out
 #
 #
-# resnet = ResNet(ResidualBlock, [3, 3, 3])
-# print(resnet)
+# def ResNet18():
+#     return ResNet(Bottleneck, [3, 4, 6, 3])
+
 # writer.add_graph(model=resnet, input_to_model=torch.ones(64, 3, 32, 32))
 # writer.flush()
 # writer.close()
@@ -752,10 +774,11 @@ from torchvision import transforms, datasets
 #             print("Epoch {}, Iteration {},  Current loss values {}".format(epoch, iteration, total_loss))
 
 """--------------------- 循环门控单元 GRU --------------------"""
-"""--------------------- 自编码器 AE 卷积自编码器--------------------"""
+
+"""--------------------- 自编码器 AE 卷积自编码器 --------------------"""
 # class EDcoder(nn.Module):
 #     def __init__(self):
-#         super(EDcoder).__init__()
+#         super().__init__()
 #         self.encoder = nn.Sequential(
 #             nn.Linear(4096, 1000),
 #             nn.Linear(1000, 3)
@@ -774,7 +797,7 @@ from torchvision import transforms, datasets
 #
 # class Conv_EDcoder(nn.Module):
 #     def __init__(self):
-#         super(Conv_EDcoder).__init__()
+#         super().__init__()
 #         self.encoder = nn.Sequential(
 #             nn.ConvTranspose2d(in_channels=3, out_channels=64, kernel_size=3),
 #             nn.ConvTranspose2d(in_channels=64, out_channels=64, kernel_size=3)
@@ -790,6 +813,8 @@ from torchvision import transforms, datasets
 #         decode = self.decoder(encode)
 #         return encode, decode
 """--------------------- 图卷积网络 GCN --------------------"""
-import torch as t
-import numpy as np
-from torch_geometric.nn import GCNConv
+# import torch as t
+# import numpy as np
+# from torch_geometric.nn import GCNConv
+"""--------------------- 注意力机制 Transformer 架构 --------------------"""
+"""来源：https://blog.csdn.net/dgvv4/article/details/125112972?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522169451395916800215086267%2522%252C%2522scm%2522%253A%252220140713.130102334..%2522%257D&request_id=169451395916800215086267&biz_id=0&utm_medium=distribute.pc_search_result.none-task-blog-2~all~top_positive~default-2-125112972-null-null.142^v93^chatsearchT3_2&utm_term=%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6&spm=1018.2226.3001.4187"""
