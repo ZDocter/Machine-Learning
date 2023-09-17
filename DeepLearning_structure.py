@@ -659,8 +659,8 @@ from torchvision import transforms, datasets
 #
 #         self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
 #         self.bn1 = nn.BatchNorm2d(64)
-#         self.layer1 = self._make_layer(block, 64, num_blocks[0], stride=1)
-#         self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2)
+#         self.layer1 = self._make_layer(block, 64, num_blocks[0], stride=1)  # 第一个残差块不对最大池化层做降采样
+#         self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2)  # 每个残差块第一个层起始步长为2， 降采样
 #         self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
 #         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
 #         self.linear = nn.Linear(512, num_classes)
@@ -687,11 +687,11 @@ from torchvision import transforms, datasets
 #         out = self.dropout(out)
 #         out = self.linear(out)
 #         return out
-#
-#
+# #
+# #
 # def ResNet18():
-#     return ResNet(Bottleneck, [3, 4, 6, 3])
-
+#     return ResNet(Bottleneck, [2, 2, 2, 2])
+# print(ResNet18())
 # writer.add_graph(model=resnet, input_to_model=torch.ones(64, 3, 32, 32))
 # writer.flush()
 # writer.close()
