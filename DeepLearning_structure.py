@@ -607,6 +607,8 @@ from torchvision import transforms, datasets
 #         self.relu = nn.ReLU(inplace=True)
 #
 #         self.shortcut = nn.Sequential()
+#         # 更简单的形式是不进行判断,直接在每个块的第一个层进行降采样
+#         # 视频网址 https://www.bilibili.com/video/BV1RM4y1i7Ts/?spm_id_from=333.1007.top_right_bar_window_history.content.click&vd_source=6a6c56e434d9639407c80ef57b3873ae
 #         if stride != 1 or in_channels != self.expansion * out_channels:
 #             self.shortcut = nn.Sequential(
 #                 nn.Conv2d(in_channels, self.expansion * out_channels, kernel_size=1, stride=stride, bias=False),
@@ -695,18 +697,42 @@ from torchvision import transforms, datasets
 # writer.add_graph(model=resnet, input_to_model=torch.ones(64, 3, 32, 32))
 # writer.flush()
 # writer.close()
-"""--------------------- 长短时记忆 LSTM --------------------"""
-# """LSTM MNIST手写字母识别"""
-# # Import packages
-# from torch.utils.data import DataLoader
-# import torchvision.datasets as dst
-# import torchvision.transforms as transforms
-# from torch.optim import Adam
-# import torchvision as tv
-# import numpy as np
-# import pandas as pd
-# import matplotlib.pyplot as plt
-#
+"""--------------------- 递归神经网络 RNN --------------------"""
+"""矩阵运算实现"""
+batch, seq_length = 1, 2  # 批大小，序列长度
+input_size, hidden_size = 4, 3  # 输入特征，隐含层特征大小
+input = torch.randn(batch, seq_length, input_size)  # 随机初始化输入向量
+h_grew = torch.randn(batch, hidden_size)  # 随机初始化第一个隐层参数
+
+
+class Rnn:
+    def __init__(self, input_size, hidden_size, output_size):
+        self.params = {}
+        self.params['W_ih'] = torch.randn(input_size, hidden_size)
+        self.params['b_ih'] = torch.randn(hidden_size)
+        self.params["h_0"] = torch.randn(input_size, hidden_size)
+        self.params['W_hh'] = torch.randn(input_size, hidden_size)
+        self.params['b_hh'] = torch.randn(hidden_size)
+
+    def forward(self, input):
+        out = torch.zeros()
+        for i in range():
+            out = torch.dot(input, self.params["W_ih"]) + self.params["b_ih"]\
+                  + torch.dot(self.params["h_0"], self.params["W_hh"] + self.params["b_hh"]
+            out = F.tanh(out)
+        return out
+
+# """1 单向, 单层 RNN"""
+# single_rnn = nn.RNN(input_size=10, hidden_size=3, num_layers=1, batch_first=True)
+# input = torch.randn(5, 2, 10)   # (batch, seq, feature = input_size)
+# output, h_n = single_rnn(input)
+# print(output, '\n', h_n)  # 最终输出(batch, seq, hidden_size), 最后序列隐层(batch, hidden_size)
+# """2 双向, 单层 RNN"""
+# bidirectional_rnn = nn.RNN(input_size=10, hidden_size=3, num_layers=1, batch_first=True, bidirectional=True)
+# bi_input = torch.randn(1, 2, 10)  # (batch, seq, feature = input_size)
+# bi_output, bi_h_n = bidirectional_rnn(bi_input)
+# print(bi_output, '\n', bi_h_n.size())  # 最终输出(batch, seq, hidden_size * 2), 最后序列隐层(双向, batch, hidden_size)
+# """3 LSTM MNIST手写字母识别"""
 # # Variables setting
 # sequence_length = 28
 # input_size = 28
@@ -718,10 +744,10 @@ from torchvision import transforms, datasets
 # lr = 0.001
 #
 # # Download MNIST datasets
-# trainmnist = dst.MNIST(root=r'D:\PyTorch_Python\Dataset_packing', train=True
-#                             , download=True, transform=transforms.ToTensor())
-# testmnist = dst.MNIST(root=r'D:\PyTorch_Python\Dataset_packing', train=False
-#                             , download=True, transform=transforms.ToTensor())
+# trainmnist = datasets.MNIST(root=r'D:\PyTorch_Python\Dataset_packing', train=True
+#                        , download=True, transform=transforms.ToTensor())
+# testmnist = datasets.MNIST(root=r'D:\PyTorch_Python\Dataset_packing', train=False
+#                       , download=True, transform=transforms.ToTensor())
 #
 # # Loader data
 # train_loader = DataLoader(trainmnist, batch_size=batch_size, shuffle=True)
@@ -746,6 +772,7 @@ from torchvision import transforms, datasets
 #         output = output[:, -1, :]  # 只保留每个样本最后一个序列数据
 #         output = self.fc(output)
 #         return output
+#
 #
 #
 # # Train model
@@ -816,5 +843,116 @@ from torchvision import transforms, datasets
 # import torch as t
 # import numpy as np
 # from torch_geometric.nn import GCNConv
-"""--------------------- 注意力机制 Transformer 架构 --------------------"""
+"""--------------------- 注意力机制 --------------------"""
 """来源：https://blog.csdn.net/dgvv4/article/details/125112972?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522169451395916800215086267%2522%252C%2522scm%2522%253A%252220140713.130102334..%2522%257D&request_id=169451395916800215086267&biz_id=0&utm_medium=distribute.pc_search_result.none-task-blog-2~all~top_positive~default-2-125112972-null-null.142^v93^chatsearchT3_2&utm_term=%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6&spm=1018.2226.3001.4187"""
+"""https://www.bilibili.com/video/BV1rL4y1n7p3/?spm_id_from=333.337.search-card.all.click&vd_source=6a6c56e434d9639407c80ef57b3873ae"""
+# # 混合注意力机制pytorch实现
+# """通道注意力机制实例 SENet"""
+# class SENet(nn.Module):
+#     def __init__(self, in_channels, rate=16):
+#         super().__init__()
+#         self.in_channels = in_channels
+#         self.out_channels = in_channels // rate
+#         self.avg_pool = nn.AdaptiveAvgPool2d(1)  # 全局平均池化
+#         # 全连接层
+#         self.fc = nn.Sequential(
+#             # 神经元个数减少
+#             nn.Linear(self.in_channels, self.out_channels, bias=False),
+#             nn.ReLU(inplace=True),
+#             # 通道恢复
+#             nn.Linear(self.out_channels, self.in_channels, bias=False),
+#             nn.Sigmoid()
+#         )
+#
+#     def forward(self, input):
+#         [b, c, h, w] = input.size()
+#         # [b, c, h, w] -> [b, c, 1, 1]
+#         avg = self.avg_pool(input).view([b, c])
+#         out = self.fc(avg).view([b, c, 1, 1])
+#         # [b, c, 1, 1] -> [b, c, h, w]
+#         out = out * input
+#
+#         return out
+#
+# """混合注意力机制 CBAM"""
+# # 通道注意力机制
+# class channels_attention(nn.Module):
+#     def __init__(self, in_channels, rate=16):
+#         super().__init__()
+#         self.in_channels = in_channels
+#         self.out_channels = in_channels // rate
+#         self.max_pool = nn.AdaptiveMaxPool2d(1)  # 全局最大池化
+#         self.avg_pool = nn.AdaptiveAvgPool2d(1)  # 全局平均池化
+#         self.fc = nn.Sequential(
+#             nn.Linear(self.in_channels, self.out_channels, bias=False),
+#             nn.ReLU(inplace=True),
+#             nn.Linear(self.out_channels, self.in_channels, bias=False)
+#         )
+#         self.sigmoid = nn.Sigmoid()
+#         self.conv = nn.Conv2d(in_channels=1, kernel_size=1, padding=0, stride=1,bias=False)
+#
+#     def forward(self, input):
+#         [b, c, h, w] = input.size()
+#         # [b, c, h, w] -> [b, c, 1, 1]
+#         avg_seq = self.avg_pool(input).view([b, c])
+#         max_seq = self.max_pool(input).view([b, c])
+#
+#         avg_out = self.fc(avg_seq).view([b, c, 1, 1])
+#         max_out = self.fc(max_seq).view([b, c, 1, 1])
+#
+#         out = avg_out + max_out
+#         out = self.sigmoid(out)
+#         # [b, c, 1, 1] -> [b, c, h, w]
+#         out = out * input
+#
+#         return out
+#
+#
+# # 空间注意力机制
+# class spatial_attention(nn.Module):
+#     def __init__(self, kernel=3):
+#         super().__init__()
+#         self.kernel = kernel
+#         self.padding = self.kernel // 2  # 保持图的大小不变
+#         self.conv = nn.Conv2d(2, 1, self.kernel, 1, self.padding, bias=False)
+#         self.sigmoid = nn.Sigmoid()
+#
+#     def forward(self, input):
+#         [b, c, h, w] = input.size()
+#         # [b, c, h, w] -> [b, 1, h, w]
+#         avg_graph, _ = torch.mean(input, dim=1, keepdim=True)
+#         max_graph, _ = torch.max(input, dim=1, keepdim=True)
+#         # [b, 1, h, w] -> [b, 2, h, w]
+#         pool = torch.cat((avg_graph, max_graph), dim=1)
+#         out = self.conv(pool).view([b, 1, h, w])
+#         out = self.sigmoid(out)
+#         # [b, 1, h, w] -> [b, c, h, w]
+#         out = out * input
+#
+#         return out
+#
+# # 混合注意力机制
+# class CBAM(nn.Module):
+#     def __init__(self, in_channels, rate=16, kernel=3):
+#         super().__init__()
+#         self.channels_attention = channels_attention(in_channels, rate)
+#         self.spatial_attention = spatial_attention(kernel)
+#
+#     def forward(self, input):
+#         out = self.channels_attention(input)
+#         out = self.spatial_attention(out)
+#
+#         return out
+"""--------------------- Transformer 架构 --------------------"""
+"""1 BERT"""
+
+"""1 Vision transformer"""
+
+
+
+
+
+
+
+
+
